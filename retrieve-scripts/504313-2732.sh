@@ -1,0 +1,1 @@
+python pubchem_retrieve.py --AID "2732" --list_of_sd_cols "Pct Inhibition" --list_of_dr_cols "IC50 (XBP1)" --transform_dr "pXC50" --AID_DR "504313" --save_dir retrieved

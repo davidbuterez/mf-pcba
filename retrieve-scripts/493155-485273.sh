@@ -1,0 +1,1 @@
+python pubchem_retrieve.py --AID "485273" --list_of_sd_cols "%Inhibition at 20uM" --list_of_dr_cols "IC50" --transform_dr "pXC50" --AID_DR "493155" --save_dir retrieved

@@ -1,0 +1,1 @@
+python pubchem_retrieve.py --AID "488975" --list_of_sd_cols "BScore_intRatio" --list_of_dr_cols "IC50" --transform_dr "pXC50" --AID_DR "504840" --save_dir retrieved

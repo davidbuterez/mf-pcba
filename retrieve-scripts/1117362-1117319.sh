@@ -1,0 +1,1 @@
+python pubchem_retrieve.py --AID "1117319" --list_of_sd_cols "PrimaryScreen PctInh (R1)" "PrimaryScreen PctInh (R2)" "PrimaryPilotScreen PctInh (R1)" "PrimaryPilotScreen PctInh (R2)" --list_of_dr_cols "Average IC50" --transform_dr "pXC50" --AID_DR "1117362" --save_dir retrieved

@@ -1,0 +1,1 @@
+python pubchem_retrieve.py --AID "489030" --list_of_sd_cols "%Activity at 20 uM" --list_of_dr_cols "IC50_Mean" --transform_dr "pXC50" --AID_DR "588524" --save_dir retrieved

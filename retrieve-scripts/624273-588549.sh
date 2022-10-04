@@ -1,0 +1,1 @@
+python pubchem_retrieve.py --AID "588549" --list_of_sd_cols "REPLICATE_A_ACTIVITY_SCORE_12.48uM_(%)" "REPLICATE_B_ACTIVITY_SCORE_12.48uM_(%)" --list_of_dr_cols "pAC50_M" --transform_dr "no" --AID_DR "624273" --save_dir retrieved

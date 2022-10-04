@@ -1,0 +1,1 @@
+python pubchem_retrieve.py --AID "449762" --list_of_sd_cols "Primary Screen Percent Inhibition @ 25 uM Rep 1" "Primary Screen Percent Inhibition @ 25 uM Rep 2" --list_of_dr_cols "IC50" --transform_dr "pXC50" --save_dir retrieved

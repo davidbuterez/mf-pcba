@@ -1,0 +1,1 @@
+python pubchem_retrieve.py --AID "624304" --list_of_sd_cols "Ratio:Normalized at 21.8 uM" --list_of_dr_cols "IC50_Mean" --transform_dr "pXC50" --AID_DR "624474" --save_dir retrieved

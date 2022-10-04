@@ -1,0 +1,1 @@
+python pubchem_retrieve.py --AID "1224905" --list_of_sd_cols "Z-score_A" "Z-score_B" --list_of_dr_cols "mP_A" "mP_B" "mP_C" --transform_dr "no" --AID_DR "1259350" --save_dir retrieved

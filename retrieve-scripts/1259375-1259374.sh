@@ -1,0 +1,1 @@
+python pubchem_retrieve.py --AID "1259374" --list_of_sd_cols "Inhibition at 2.6 uM" --list_of_dr_cols "LogIC50" --transform_dr "minus" --AID_DR "1259375" --save_dir retrieved

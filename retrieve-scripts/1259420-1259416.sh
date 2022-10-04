@@ -1,0 +1,1 @@
+python pubchem_retrieve.py --AID "1259416" --list_of_sd_cols "REPLICATE_A_ACTIVITY" "REPLICATE_B_ACTIVITY" --list_of_dr_cols "pAC50_M" --transform_dr "no" --AID_DR "1259420" --save_dir retrieved

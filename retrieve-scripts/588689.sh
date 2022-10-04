@@ -1,0 +1,1 @@
+python pubchem_retrieve.py --AID "588689" --list_of_sd_cols "Primary Screen % Inhibition @ 25 uM" "Pilot 10K Screen % Inhibition @ 25 uM Rep 1" "Pilot 10K Screen % Inhibition @ 25 uM Rep 2" --list_of_dr_cols "IC50" --transform_dr "pXC50" --save_dir retrieved
