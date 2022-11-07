@@ -1,6 +1,14 @@
 
 # MF-PCBA
 
+![](figures/main-figure.png)
+
+## Abstract
+High-throughput screening (HTS), as one of the key techniques in drug discovery, is frequently used to identify promising drug candidates in a largely automated and cost-effective way. One of the necessary conditions for successful HTS campaigns is a large and diverse compound library, enabling hundreds of thousands of activity measurements per project. Such collections of data hold great promise for computational and experimental drug discovery efforts, especially when leveraged in combination with modern deep learning techniques, and potentially leading to improved drug activity predictions and cheaper and more effective experimental design. However, existing collections of machine learning ready public datasets do not exploit the multiple data modalities present in real-world HTS projects. Thus, the largest fraction of experimental measurements, corresponding to hundreds of thousands of 'noisy' activity values from primary screening, are effectively ignored in the majority of machine learning models of HTS data.
+
+To address these limitations, we introduce MF-PCBA (Multi Fidelity PubChem BioAssay), a curated collection of 60 datasets that includes two data modalities for each dataset, corresponding to primary and confirmatory screening, an aspect that we call *multi-fidelity*. Multi-fidelity data accurately reflects real-world HTS conventions, and presents a new, challenging task for machine learning: the integration of low and high-fidelity measurements through molecular representation learning, taking into account the orders-of-magnitude difference in size between the primary and confirmatory screens. Here, we detail the steps taken to assemble MF-PCBA, in terms of data acquisition from PubChem and the filtering steps required to curate the raw data. We also provide an evaluation of a recent, deep-learning based method for multi-fidelity integration across the introduced datasets, demonstrating the benefit of leveraging all HTS modalities, and a discussion in terms of the roughness of the molecular activity landscape. In total, MF-PCBA contains over 16.6 million unique molecule-protein interactions.
+
+## General
 This repository contains the code required to download, filter, and assemble multi-fidelity datasets from PubChem.
 
 The main functionality is provided in the script `pubchem_retrieve.py`. The script takes the following arguments:
