@@ -3,6 +3,9 @@
 
 ![](figures/main-figure.png)
 
+## General
+This repository contains the code accompanying the paper [MF-PCBA: Multi-fidelity high-throughput screening benchmarks for drug discovery and machine learning](https://chemrxiv.org/engage/chemrxiv/article-details/636fa49b80c9bfb4dc944c1c). It can be used to download, filter, and assemble the MF-PCBA datasets in a format that is easily usable for machine learning.
+
 ## Abstract
 High-throughput screening (HTS), as one of the key techniques in drug discovery, is frequently used to identify promising drug candidates in a largely automated and cost-effective way. One of the necessary conditions for successful HTS campaigns is a large and diverse compound library, enabling hundreds of thousands of activity measurements per project. Such collections of data hold great promise for computational and experimental drug discovery efforts, especially when leveraged in combination with modern deep learning techniques, and potentially leading to improved drug activity predictions and cheaper and more effective experimental design. However, existing collections of machine learning ready public datasets do not exploit the multiple data modalities present in real-world HTS projects. Thus, the largest fraction of experimental measurements, corresponding to hundreds of thousands of 'noisy' activity values from primary screening, are effectively ignored in the majority of machine learning models of HTS data.
 
@@ -74,3 +77,8 @@ parent_dir/
 ```
 ## Multi-fidelity machine learning worflows
 In-depth examples of how to use the MF-PCBA datasets are provided in the repository https://github.com/davidbuterez/multi-fidelity-gnns-for-drug-discovery, corresponding to the *Improving molecular property prediction with multi-fidelity graph representation learning on millions of experimental endpoints* paper.
+
+## Citing
+If you use the MF-PCBA datasets in your work, a citation to the accompanying paper is appreciated:
+
+> ``` @article{buterez_janet_kiddle_liò_2022, place={Cambridge}, title={MF-PCBA: Multi-fidelity high-throughput screening benchmarks for drug discovery and machine learning}, DOI={10.26434/chemrxiv-2022-cb3tz}, journal={ChemRxiv}, publisher={Cambridge Open Engage}, author={Buterez, David and Janet, Jon Paul and Kiddle, Steven J. and Liò, Pietro}, year={2022}} This content is a preprint and has not been peer-reviewed.```
