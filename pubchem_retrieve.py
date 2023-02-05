@@ -91,25 +91,29 @@ def get_smiles_from_pubchem_by_cid(aid):
     return smiles_df
 
 
-def aggregate_sd(df, list_of_replicate_column_names):
+def aggregate_sd(df, list_of_replicate_column_names, agg_fn='median'):
     # This function aggregates replicate measurements from the primary screen
     # (given by the different column names, if more than one). The functions
     # also computed a Z-Score based on the activity values (not currently
     # used in modelling).
 
-    df['SD'] = df[list_of_replicate_column_names].apply(pd.to_numeric, errors='coerce', axis=1).mean(axis=1, skipna=True).astype(float)
+    assert agg_fn in ['median', 'mean']
+    df['SD'] = df[list_of_replicate_column_names].apply(pd.to_numeric, errors='coerce', axis=1) \
+                                                 .agg(func=agg_fn, axis=1, skipna=True).astype(float)
     df['SD Z-score'] = stats.zscore(df['SD'].values, nan_policy='omit')
     return df
 
 
-def aggregate_dr(df, list_of_replicate_column_names, transform_dr='no'):
+def aggregate_dr(df, list_of_replicate_column_names, transform_dr='no', agg_fn='median'):
     # Aggregate multiple measurements (columns) for confirmatory data, if they
     # exist. The function also takes care of converting a generic 'XC50' score
     # into the corresponding pXC50.
 
     assert transform_dr in ['no', 'pXC50', 'minus']
+    assert agg_fn in ['median', 'mean']
 
-    processed_dr = df[list_of_replicate_column_names].apply(pd.to_numeric, errors='coerce', axis=1).mean(axis=1, skipna=True)
+    processed_dr = df[list_of_replicate_column_names].apply(pd.to_numeric, errors='coerce', axis=1) \
+                                                     .agg(func=agg_fn, axis=1, skipna=True)
 
     if transform_dr == 'pXC50':
         df['DR'] = -np.log10(processed_dr * 1e-6)
@@ -143,15 +147,48 @@ def add_mols_from_smiles(df):
     return df
 
 
-def remove_if_different_largest_fragment(df):
-    # Removes from the dataframe molecules that contain a combination of
-    # compounds.
+def largest_fragment_filtering(df, remove_if_multiple_fragments=True, fragment_list=None):
+    # Removes or keeps the largest fragment for each compound, according
+    # to the provided options.
 
     print('Largest fragment filtering...')
 
+    # Save largest fragments
     largest_Fragment = rdMolStandardize.LargestFragmentChooser()
     df['l-fragsmiles'] = [Chem.MolToSmiles(largest_Fragment.choose(m)) for m in tqdm(df['mol'])]
-    df = df.loc[df['rdkit-smiles'] == df['l-fragsmiles']]
+
+    if fragment_list is not None:
+        print('Comparing smaller fragments with provided list...')
+
+        # Compute all fragments
+        df['other-fragsmiles'] = [
+            [Chem.MolToSmiles(fr) for fr in Chem.rdmolops.GetMolFrags(m, asMols=True)] for m in tqdm(df['mol'])
+            ]
+        
+        # Get all fragments besides the largest one
+        smaller_fragments = df.apply(
+            lambda row: [s for s in row['other-fragsmiles'] if s != row['l-fragsmiles']], axis=1
+            )
+        
+        # Log instances of fragments not in the provided fragment list
+        if fragment_list is not None:
+            for small_fr_list in smaller_fragments:
+                for fr in small_fr_list:
+                    if fr not in fragment_list:
+                        print(f'Fragment {fr} not in provided list!')
+
+    # In this case we remove all compounds where multiple fragments where
+    # encountered
+    if remove_if_multiple_fragments:
+        print('Removing compounds with multiple fragments...')
+        df = df.loc[df['rdkit-smiles'] == df['l-fragsmiles']]
+        return df
+    
+    # Otherwise, keep only the largest fragment and recompute related data
+    print('Keeping compounds with multiple fragments.')
+    df.loc[:, 'rdkit-smiles'] = df['l-fragsmiles']
+    df.loc[:, 'mol'] = [Chem.MolFromSmiles(s) for s in tqdm(df['rdkit-smiles'])]
+    df = df.dropna(subset=['mol'])
 
     return df
 
@@ -195,20 +232,28 @@ def neutralise_df(df):
         except Chem.rdchem.AtomValenceException:
             return None
         
-    df['neut-smiles'] = df['mol'].apply(func=neutralise_smiles)
-    df = df[df['neut-smiles'].notna()]
-    df['neut-mol'] = [Chem.MolFromSmiles(s) for s in tqdm(df['neut-smiles'])]
-    df['neut-chr'] = [rdmolops.GetFormalCharge(m) for m in tqdm(df['neut-mol'])]
+    df.loc[:, 'neut-smiles'] = df['mol'].apply(func=neutralise_smiles)
+    df = df.dropna(subset=['neut-smiles'])
+    df = df.copy()
+    df.loc[:, 'neut-mol'] = [Chem.MolFromSmiles(s) for s in tqdm(df['neut-smiles'])]
+    df = df.dropna(subset=['neut-mol'])
+    df.loc[:, 'neut-chr'] = [rdmolops.GetFormalCharge(m) for m in tqdm(df['neut-mol'])]
     df = df.loc[df['neut-chr'] == 0]
 
     return df
 
 
-def filter(aid, list_of_sd_cols, list_of_dr_cols, transform_dr, aid_dr=None):
+def filter(aid, list_of_sd_cols, list_of_dr_cols, transform_dr, aid_dr=None,
+           remove_if_multiple_fragments=False, fragment_smiles=None):
     # Main processing function, taking care of downloading and filtering AID
     # data. Keeps and returns the associated metadata.
 
-    metadata = {'AID': aid, 'SD columns': list_of_sd_cols, 'DR columns': list_of_dr_cols, 'Separate DR': 'Yes' if aid_dr else 'No'}
+    metadata = {
+        'AID': aid,
+        'SD columns': list_of_sd_cols,
+        'DR columns': list_of_dr_cols,
+        'Separate DR': 'Yes' if aid_dr else 'No'
+        }
 
     # Retrieve the AID data table.
     main_df = retrieve_aid_as_csv(aid)
@@ -249,10 +294,10 @@ def filter(aid, list_of_sd_cols, list_of_dr_cols, transform_dr, aid_dr=None):
         metadata['After RDKit DR size'] = main_df[main_df['DR'].notna()].shape[0]
 
     # Remove CIDs that denoted a combination of compounds.
-    main_df = remove_if_different_largest_fragment(main_df)
+    main_df = largest_fragment_filtering(main_df, remove_if_multiple_fragments, fragment_smiles)
     metadata['After largest fragment SD size'] = main_df.shape[0]
     if aid_dr:
-        dr_df = remove_if_different_largest_fragment(dr_df)
+        dr_df = largest_fragment_filtering(dr_df, remove_if_multiple_fragments, fragment_smiles)
         metadata['After largest fragment DR size'] = dr_df.shape[0]
     else:
         metadata['After largest fragment DR size'] = main_df[main_df['DR'].notna()].shape[0]
@@ -319,12 +364,14 @@ def filter(aid, list_of_sd_cols, list_of_dr_cols, transform_dr, aid_dr=None):
     if aid_dr:
         metadata['Filtered DR size'] = merged_df.shape[0]
         merged_df = merged_df.replace([np.inf, -np.inf], np.nan, inplace=False)
-        r, pvalue = stats.pearsonr(merged_df[merged_df['DR'].notna()]['SD'].values, merged_df[merged_df['DR'].notna()]['DR'].values)
+        r, pvalue = stats.pearsonr(merged_df[merged_df['DR'].notna()]['SD'].values, 
+                                   merged_df[merged_df['DR'].notna()]['DR'].values)
     else:
         main_df_dr = main_df[main_df['DR'].notna()]
         main_df_dr = main_df_dr.replace([np.inf, -np.inf], np.nan, inplace=False)
         metadata['Filtered DR size'] = main_df_dr.shape[0]
-        r, pvalue = stats.pearsonr(main_df_dr[main_df_dr['DR'].notna()]['SD'].values, main_df_dr[main_df_dr['DR'].notna()]['DR'].values)
+        r, pvalue = stats.pearsonr(main_df_dr[main_df_dr['DR'].notna()]['SD'].values,
+                                   main_df_dr[main_df_dr['DR'].notna()]['DR'].values)
 
     metadata['Pearson r'] = float(r)
     metadata['Pearson correlation p-value'] = float(pvalue)
@@ -344,18 +391,35 @@ def main():
     parser.add_argument('--transform_dr', type=str, required=True)
     parser.add_argument('--AID_DR', type=str, required=False)
     parser.add_argument('--save_dir', type=str, required=True)
+    parser.add_argument('--remove_if_multiple_fragments', action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument('--compare_fragments_with_list', action=argparse.BooleanOptionalAction, default=False)
     args = parser.parse_args()
     argsdict = vars(args)
 
+    fragment_smiles = None
+    if argsdict['compare_fragments_with_list']:
+        fragment_smiles = pd.read_csv('small_fragments/fragment_counts.csv')['SMILES'].values
+
     # Get SD and DR dataframes (if separate), a dataframe of DR compounds with
     # no SD values (if it exists), and the computed metadata.
-    main_df, dr_df, dr_not_in_sd_df, metadata = filter(argsdict['AID'], list_of_sd_cols=argsdict['list_of_sd_cols'], list_of_dr_cols=argsdict['list_of_dr_cols'], transform_dr=argsdict['transform_dr'], aid_dr=argsdict['AID_DR'])
+    main_df, dr_df, dr_not_in_sd_df, metadata = filter(
+        argsdict['AID'],
+        list_of_sd_cols=argsdict['list_of_sd_cols'],
+        list_of_dr_cols=argsdict['list_of_dr_cols'],
+        transform_dr=argsdict['transform_dr'],
+        aid_dr=argsdict['AID_DR'],
+        remove_if_multiple_fragments=argsdict['remove_if_multiple_fragments'],
+        fragment_smiles=fragment_smiles
+    )
 
     # Generate a save directory at the indicated path.
     if argsdict['AID_DR']:
-        save_dir = '{save_dir}/AID{id2}-{id}/'.format(save_dir=argsdict['save_dir'], id=argsdict['AID'], id2=argsdict['AID_DR'])
+        save_dir = '{save_dir}/AID{id2}-{id}/'.format(
+            save_dir=argsdict['save_dir'], id=argsdict['AID'], id2=argsdict['AID_DR']
+            )
     else:
         save_dir = '{save_dir}/AID{id}/'.format(save_dir=argsdict['save_dir'], id=argsdict['AID'])
+
     Path(save_dir).mkdir(exist_ok=True)
 
     # Save dataframes to disk.
