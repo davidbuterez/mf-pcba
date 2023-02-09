@@ -48,7 +48,7 @@ Scripts to download, filter, and assemble all 60 multi-fidelity datasets (indivi
 The five random seeds for each of the 60 multi-fidelity datasets are provided in the file `MF_PCBA_random_seeds.json`, with an example of their usage in `split_DR_with_random_seeds.ipynb`.
 
 ### Requirements
-The code requires the following Python libraries: `pandas`, `numpy`, `rdkit`, `tqdm`, `scipy`.
+At least Python 3.9 is required for argument parsing. The code requires the following libraries: `pandas`, `numpy`, `rdkit`, `tqdm`, `scipy`.
 
 ## Example workflow
 1. Download one dataset or a selection of datasets. For example, the following command downloads the AID 1445 dataset to a `save_dir` directory:

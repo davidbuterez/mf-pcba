@@ -13,6 +13,7 @@ from scipy import stats
 from rdkit import Chem
 from rdkit.Chem import rdmolops
 from rdkit.Chem.MolStandardize import rdMolStandardize
+from rdkit.Chem.rdMolDescriptors import CalcNumAtomStereoCenters
 
 
 def listkey_request(aid, sids_or_cids):
@@ -186,6 +187,7 @@ def largest_fragment_filtering(df, remove_if_multiple_fragments=True, fragment_l
     
     # Otherwise, keep only the largest fragment and recompute related data
     print('Keeping compounds with multiple fragments.')
+    assert len(df['rdkit-smiles']) == len(df['l-fragsmiles'])
     df.loc[:, 'rdkit-smiles'] = df['l-fragsmiles']
     df.loc[:, 'mol'] = [Chem.MolFromSmiles(s) for s in tqdm(df['rdkit-smiles'])]
     df = df.dropna(subset=['mol'])
@@ -193,18 +195,23 @@ def largest_fragment_filtering(df, remove_if_multiple_fragments=True, fragment_l
     return df
 
 
-def remove_stereoisomers(df, sort_col='SD'):
+def filter_stereoisomers(df, should_remove_stereo=True, sort_col='SD'):
     # Removes the stereochemical information from all molecules in a dataframe
-    # and keeps only the unique resulting SMILES.
+    # and keeps only the unique resulting SMILES (default).
+    # Alternatively, save the number of stereocenters in the dataframe.
 
-    print('Removing stereoisomers...')
+    print('Computing the number of stereocenters...')
+    df['# stereocenters'] = [CalcNumAtomStereoCenters(m) for m in tqdm(df['mol'])]
 
-    def smiles_no_stereo(mol):
-        rdmolops.RemoveStereochemistry(mol)
-        return Chem.MolToSmiles(mol)
-    
-    df['sf-smiles'] = df['mol'].apply(func=smiles_no_stereo)
-    df = df.sort_values(sort_col, ascending=False).drop_duplicates('sf-smiles', keep='first')
+    if should_remove_stereo:
+        print('Removing stereoisomers...')
+
+        def smiles_no_stereo(mol):
+            rdmolops.RemoveStereochemistry(mol)
+            return Chem.MolToSmiles(mol)
+        
+        df['sf-smiles'] = df['mol'].apply(func=smiles_no_stereo)
+        df = df.sort_values(sort_col, ascending=False).drop_duplicates('sf-smiles', keep='first')
 
     return df
 
@@ -244,7 +251,7 @@ def neutralise_df(df):
 
 
 def filter(aid, list_of_sd_cols, list_of_dr_cols, transform_dr, aid_dr=None,
-           remove_if_multiple_fragments=False, fragment_smiles=None):
+           remove_if_multiple_fragments=False, fragment_smiles=None, remove_stereoisomers=False):
     # Main processing function, taking care of downloading and filtering AID
     # data. Keeps and returns the associated metadata.
 
@@ -303,10 +310,10 @@ def filter(aid, list_of_sd_cols, list_of_dr_cols, transform_dr, aid_dr=None,
         metadata['After largest fragment DR size'] = main_df[main_df['DR'].notna()].shape[0]
 
     # Remove stereochemistry
-    main_df = remove_stereoisomers(main_df, 'SD')
+    main_df = filter_stereoisomers(main_df, remove_stereoisomers, sort_col='SD')
     metadata['After stereoisomers SD size'] = main_df.shape[0]
     if aid_dr:
-        dr_df = remove_stereoisomers(dr_df, 'DR')
+        dr_df = filter_stereoisomers(dr_df, remove_stereoisomers, sort_col='DR')
         metadata['After stereoisomers DR size'] = dr_df.shape[0]
     else:
         metadata['After stereoisomers DR size'] = main_df[main_df['DR'].notna()].shape[0]
@@ -327,16 +334,24 @@ def filter(aid, list_of_sd_cols, list_of_dr_cols, transform_dr, aid_dr=None,
         assert len(dr_df['CID'].values) == len(set(dr_df['CID'].values.tolist()))
 
     # Make sure to only keep columns of interest.
+    other_cols_to_keep = []
+    if 'other-fragsmiles' in main_df.columns:
+        other_cols_to_keep.append('other-fragsmiles')
+    if '# stereocenters' in main_df.columns:
+        other_cols_to_keep.append('# stereocenters')
+
     if aid_dr:
-        main_df = main_df[['CID', 'SD', 'SD Z-score', 'Activity', 'neut-smiles']]
-        dr_df = dr_df[['CID', *dr_names, 'Activity', 'neut-smiles']]
+        main_df = main_df[['CID', 'SD', 'SD Z-score', 'Activity', 'neut-smiles', *other_cols_to_keep]]
+        dr_df = dr_df[['CID', *dr_names, 'Activity', 'neut-smiles', *other_cols_to_keep]]
     else:
-        main_df = main_df[['CID', 'SD', 'SD Z-score', *dr_names, 'Activity', 'neut-smiles']]
+        main_df = main_df[['CID', 'SD', 'SD Z-score', *dr_names, 'Activity', 'neut-smiles', *other_cols_to_keep]]
 
     merged_df = None
     if aid_dr:
         merged_df = main_df.merge(right=dr_df, on='CID')
-        merged_df = merged_df[['CID', 'SD', 'SD Z-score', *dr_names, 'Activity_y', 'neut-smiles_y']]
+        merged_df = merged_df[
+            ['CID', 'SD', 'SD Z-score', *dr_names, 'Activity_y', 'neut-smiles_y', *other_cols_to_keep]
+            ]
         merged_df = merged_df.rename(columns={'Activity_y': 'Activity', 'neut-smiles_y': 'neut-smiles'})
 
 
@@ -393,6 +408,7 @@ def main():
     parser.add_argument('--save_dir', type=str, required=True)
     parser.add_argument('--remove_if_multiple_fragments', action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument('--compare_fragments_with_list', action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument('--remove_stereoisomers', action=argparse.BooleanOptionalAction, default=True)
     args = parser.parse_args()
     argsdict = vars(args)
 
@@ -409,7 +425,8 @@ def main():
         transform_dr=argsdict['transform_dr'],
         aid_dr=argsdict['AID_DR'],
         remove_if_multiple_fragments=argsdict['remove_if_multiple_fragments'],
-        fragment_smiles=fragment_smiles
+        fragment_smiles=fragment_smiles,
+        remove_stereoisomers=argsdict['remove_stereoisomers']
     )
 
     # Generate a save directory at the indicated path.
