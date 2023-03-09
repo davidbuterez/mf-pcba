@@ -349,10 +349,15 @@ def filter(aid, list_of_sd_cols, list_of_dr_cols, transform_dr, aid_dr=None,
     merged_df = None
     if aid_dr:
         merged_df = main_df.merge(right=dr_df, on='CID')
+        other_cols_to_keep = [s + '_y' for s in other_cols_to_keep]
         merged_df = merged_df[
             ['CID', 'SD', 'SD Z-score', *dr_names, 'Activity_y', 'neut-smiles_y', *other_cols_to_keep]
             ]
-        merged_df = merged_df.rename(columns={'Activity_y': 'Activity', 'neut-smiles_y': 'neut-smiles'})
+        other_cols_to_keep_renamed = [s[:-2] for s in other_cols_to_keep]
+        merged_df = merged_df.rename(
+            columns={'Activity_y': 'Activity', 'neut-smiles_y': 'neut-smiles',
+                     **(dict(zip(other_cols_to_keep, other_cols_to_keep_renamed)))}
+        )
 
 
     # Separate compounds with a DR value but without an SD value.
