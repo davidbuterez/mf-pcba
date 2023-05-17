@@ -100,3 +100,30 @@ If you use the MF-PCBA datasets in your work, a citation to the accompanying pap
     }
 }
 ```
+
+The main algorithmic and methodological contributions are covered by our other related papers:
+```
+ @article{
+	 buterez_janet_kiddle_liò_2022,
+	 place={Cambridge},
+	 title={Multi-fidelity machine learning models for improved high-throughput screening predictions},
+	 DOI={10.26434/chemrxiv-2022-dsbm5-v2},
+	 journal={ChemRxiv},
+	 publisher={Cambridge Open Engage},
+	 author={Buterez, David and Janet, Jon Paul and Kiddle, Steven and Liò, Pietro},
+	 year={2022}
+ }
+```
+
+```
+@inproceedings{
+	buterez2022graph,
+	title={Graph Neural Networks with Adaptive Readouts},
+	author={David Buterez and Jon Paul Janet and Steven J Kiddle and Dino Oglic and Pietro Li{\`o}},
+	booktitle={Advances in Neural Information Processing Systems},
+	editor={Alice H. Oh and Alekh Agarwal and Danielle Belgrave and Kyunghyun Cho},
+	year={2022},
+	url={https://openreview.net/forum?id=yts7fLpWY9G}
+}
+```
+
