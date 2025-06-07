@@ -91,28 +91,32 @@ If you use the MF-PCBA datasets in your work, a citation to the accompanying pap
     pages = {null},
     year = {0},
     doi = {10.1021/acs.jcim.2c01569},
-
-    URL = {
-            https://doi.org/10.1021/acs.jcim.2c01569
-    },
-    eprint = {
-            https://doi.org/10.1021/acs.jcim.2c01569 
-    }
+    URL = {https://doi.org/10.1021/acs.jcim.2c01569},
+    eprint = {https://doi.org/10.1021/acs.jcim.2c01569}
 }
 ```
 
 The main algorithmic and methodological contributions are covered by our other related papers:
 ```
- @article{
-	 buterez_janet_kiddle_liò_2022,
-	 place={Cambridge},
-	 title={Multi-fidelity machine learning models for improved high-throughput screening predictions},
-	 DOI={10.26434/chemrxiv-2022-dsbm5-v2},
-	 journal={ChemRxiv},
-	 publisher={Cambridge Open Engage},
-	 author={Buterez, David and Janet, Jon Paul and Kiddle, Steven and Liò, Pietro},
-	 year={2022}
- }
+@Article{Buterez2024,
+	author={Buterez, David
+	and Janet, Jon Paul
+	and Kiddle, Steven J.
+	and Oglic, Dino
+	and Li{\'o}, Pietro},
+	title={Transfer learning with graph neural networks for improved molecular property prediction in the multi-fidelity setting},
+	journal={Nature Communications},
+	year={2024},
+	month={Feb},
+	day={26},
+	volume={15},
+	number={1},
+	pages={1517},
+	abstract={We investigate the potential of graph neural networks for transfer learning and improving molecular property prediction on sparse and expensive to acquire high-fidelity data by leveraging low-fidelity measurements as an inexpensive proxy for a targeted property of interest. This problem arises in discovery processes that rely on screening funnels for trading off the overall costs against throughput and accuracy. Typically, individual stages in these processes are loosely connected and each one generates data at different scale and fidelity. We consider this setup holistically and demonstrate empirically that existing transfer learning techniques for graph neural networks are generally unable to harness the information from multi-fidelity cascades. Here, we propose several effective transfer learning strategies and study them in transductive and inductive settings. Our analysis involves a collection of more than 28 million unique experimental protein-ligand interactions across 37 targets from drug discovery by high-throughput screening and 12 quantum properties from the dataset QMugs. The results indicate that transfer learning can improve the performance on sparse tasks by up to eight times while using an order of magnitude less high-fidelity training data. Moreover, the proposed methods consistently outperform existing transfer learning strategies for graph-structured data on drug discovery and quantum mechanics datasets.},
+	issn={2041-1723},
+	doi={10.1038/s41467-024-45566-8},
+	url={https://doi.org/10.1038/s41467-024-45566-8}
+}
 ```
 
 ```
