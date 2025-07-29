@@ -85,7 +85,7 @@ def get_smiles_from_pubchem_by_cid(aid):
     print('Retrieving SMILES from PubChem...')
 
     listkey, size = listkey_request(aid, 'cids')
-    retrieve_template = 'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/listkey/{listkey_id}/property/CanonicalSMILES/CSV?&listkey_start={{iter_start}}&listkey_count=5000'
+    retrieve_template = 'https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/listkey/{listkey_id}/property/ConnectivitySMILES/CSV?&listkey_start={{iter_start}}&listkey_count=5000'
     smiles_df = retrieve_csv_from_listkey(retrieve_template.format(listkey_id=listkey), size, cid_col='CID')
     smiles_df['CID'] = smiles_df['CID'].astype(int)
 
@@ -142,7 +142,7 @@ def add_mols_from_smiles(df):
     # This function generates an RDKit mol object for each molecule.
 
     print('Reading SMILES into RDKit...')
-    df['mol'] = [Chem.MolFromSmiles(s) for s in tqdm(df['CanonicalSMILES'])]
+    df['mol'] = [Chem.MolFromSmiles(s) for s in tqdm(df['ConnectivitySMILES'])]
     df['rdkit-smiles'] = [Chem.MolToSmiles(m) for m in tqdm(df['mol'])]
 
     return df
